@@ -75,9 +75,9 @@ const PurchaseEstimationModule = () => {
     rotations.forEach(rot => {
       const [x, y, z] = rot;
       
-      const pX = x > gl ? 0 : Math.floor(gl / (x + k));
-      const pY = y > gw ? 0 : Math.floor(gw / (y + k));
-      const pZ = z > gh ? 0 : Math.floor(gh / (z + k));
+      const pX = (x <= gl && x > 0) ? (Math.abs(gl - x) < 0.0001 ? 1 : Math.floor(gl / (x + k))) : 0;
+      const pY = (y <= gw && y > 0) ? (Math.abs(gw - y) < 0.0001 ? 1 : Math.floor(gw / (y + k))) : 0;
+      const pZ = (z <= gh && z > 0) ? (Math.abs(gh - z) < 0.0001 ? 1 : Math.floor(gh / (z + k))) : 0;
       
       const total = pX * pY * pZ;
       if (total >= maxYield && total > 0) {
@@ -189,6 +189,24 @@ const PurchaseEstimationModule = () => {
                   <input type="number" placeholder="H" value={grossDims.h} onChange={e => setGrossDims({...grossDims, h: e.target.value})} className="bg-darkbg border border-titanium/30 rounded-lg px-4 py-2 text-steel focus:border-metalaccent focus:ring-1 focus:ring-metalaccent outline-none" />
                 </div>
               </div>
+
+              {unit === 'inches' && (
+                <div className="bg-darkbg/80 border border-titanium/20 rounded-lg p-4 mt-2">
+                  <h4 className="text-xs font-bold text-titanium uppercase tracking-wider mb-2 border-b border-titanium/10 pb-2 flex items-center gap-2">
+                    <span className="w-4 h-4 rounded bg-metalaccent/20 border border-metalaccent/50 flex items-center justify-center text-metalaccent text-[10px] font-bold">!</span>
+                    Fractional Help Table
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2 text-xs font-mono">
+                    <div className="flex justify-between border-b border-titanium/10 pb-1"><span className="text-titanium">1/8"</span><span className="text-steel">0.125</span></div>
+                    <div className="flex justify-between border-b border-titanium/10 pb-1"><span className="text-titanium">1/4"</span><span className="text-steel">0.25</span></div>
+                    <div className="flex justify-between border-b border-titanium/10 pb-1"><span className="text-titanium">1/3"</span><span className="text-steel">0.333</span></div>
+                    <div className="flex justify-between border-b border-titanium/10 pb-1"><span className="text-titanium">1/2"</span><span className="text-steel">0.5</span></div>
+                    <div className="flex justify-between border-b border-titanium/10 pb-1"><span className="text-titanium">2/3"</span><span className="text-steel">0.666</span></div>
+                    <div className="flex justify-between border-b border-titanium/10 pb-1"><span className="text-titanium">3/4"</span><span className="text-steel">0.75</span></div>
+                    <div className="flex justify-between border-b border-titanium/10 pb-1"><span className="text-titanium">7/8"</span><span className="text-steel">0.875</span></div>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <h3 className="text-lg font-bold text-white uppercase tracking-wider mb-3 border-b border-titanium/20 pb-2">Material Cost</h3>
