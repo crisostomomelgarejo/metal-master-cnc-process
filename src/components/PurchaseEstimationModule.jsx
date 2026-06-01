@@ -4,6 +4,9 @@ const PurchaseEstimationModule = () => {
   const [piezas, setPiezas] = useState([]);
   const [selectedPieza, setSelectedPieza] = useState(null);
   
+  const [unit, setUnit] = useState('mm');
+  const [kerf, setKerf] = useState(3.0);
+
   const [partDims, setPartDims] = useState({ l: '', w: '', h: '' });
   const [grossDims, setGrossDims] = useState({ l: '', w: '', h: '' });
   const [grossCost, setGrossCost] = useState('');
@@ -44,20 +47,49 @@ const PurchaseEstimationModule = () => {
     setMessage('');
   };
 
-  const calcVolume = (dims) => {
-    const l = parseFloat(dims.l) || 0;
-    const w = parseFloat(dims.w) || 0;
-    const h = parseFloat(dims.h) || 0;
-    return l * w * h;
+  const calculateMaxYield = (gross, part, kValue) => {
+    const gl = parseFloat(gross.l) || 0;
+    const gw = parseFloat(gross.w) || 0;
+    const gh = parseFloat(gross.h) || 0;
+    
+    const pl = parseFloat(part.l) || 0;
+    const pw = parseFloat(part.w) || 0;
+    const ph = parseFloat(part.h) || 0;
+    
+    const k = parseFloat(kValue) || 0;
+    
+    if (!gl || !gw || !gh || !pl || !pw || !ph) return { pieces: 0, breakdown: '' };
+
+    const rotations = [
+      [pl, pw, ph],
+      [pl, ph, pw],
+      [pw, pl, ph],
+      [pw, ph, pl],
+      [ph, pl, pw],
+      [ph, pw, pl]
+    ];
+    
+    let maxYield = 0;
+    let bestBreakdown = '0x0x0 = 0 piezas';
+    
+    rotations.forEach(rot => {
+      const [x, y, z] = rot;
+      
+      const pX = x > gl ? 0 : Math.floor(gl / (x + k));
+      const pY = y > gw ? 0 : Math.floor(gw / (y + k));
+      const pZ = z > gh ? 0 : Math.floor(gh / (z + k));
+      
+      const total = pX * pY * pZ;
+      if (total >= maxYield && total > 0) {
+        maxYield = total;
+        bestBreakdown = `${pX}x${pY}x${pZ} = ${total} piezas`;
+      }
+    });
+    
+    return { pieces: maxYield, breakdown: maxYield > 0 ? bestBreakdown : '0x0x0 = 0 piezas' };
   };
 
-  const partVolume = calcVolume(partDims);
-  const grossVolume = calcVolume(grossDims);
-  
-  let piecesAvailable = 0;
-  if (partVolume > 0 && grossVolume > 0) {
-    piecesAvailable = Math.floor((grossVolume * 0.95) / partVolume);
-  }
+  const { pieces: piecesAvailable, breakdown } = calculateMaxYield(grossDims, partDims, kerf);
   
   let unitCost = 0;
   if (piecesAvailable > 0 && parseFloat(grossCost) > 0) {
@@ -73,6 +105,8 @@ const PurchaseEstimationModule = () => {
       const payload = {
         ...selectedPieza,
         purchase_estimation: {
+          unidad: unit,
+          kerf,
           partDims,
           grossDims,
           grossCost,
@@ -126,8 +160,20 @@ const PurchaseEstimationModule = () => {
 
           {selectedPieza && (
             <div className="space-y-6 animate-fade-in">
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-4">
+                  <span className="text-titanium text-sm uppercase tracking-wider">Unit:</span>
+                  <button onClick={() => { setUnit('mm'); setKerf(3.0); }} className={`px-3 py-1 rounded text-sm font-bold tracking-wider ${unit === 'mm' ? 'bg-metalaccent text-white' : 'bg-darkbg text-titanium border border-titanium/30'}`}>MM</button>
+                  <button onClick={() => { setUnit('inches'); setKerf(0.125); }} className={`px-3 py-1 rounded text-sm font-bold tracking-wider ${unit === 'inches' ? 'bg-metalaccent text-white' : 'bg-darkbg text-titanium border border-titanium/30'}`}>INCHES</button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-titanium text-sm uppercase tracking-wider">Kerf:</span>
+                  <input type="number" value={kerf} onChange={e => setKerf(e.target.value)} className="w-24 bg-darkbg border border-titanium/30 rounded px-3 py-1 text-steel focus:border-metalaccent outline-none" />
+                </div>
+              </div>
+
               <div>
-                <h3 className="text-lg font-bold text-white uppercase tracking-wider mb-3 border-b border-titanium/20 pb-2">Final Part Dimensions (mm)</h3>
+                <h3 className="text-lg font-bold text-white uppercase tracking-wider mb-3 border-b border-titanium/20 pb-2">Final Part Dimensions ({unit})</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <input type="number" placeholder="L" value={partDims.l} onChange={e => setPartDims({...partDims, l: e.target.value})} className="bg-darkbg border border-titanium/30 rounded-lg px-4 py-2 text-steel focus:border-metalaccent focus:ring-1 focus:ring-metalaccent outline-none" />
                   <input type="number" placeholder="W" value={partDims.w} onChange={e => setPartDims({...partDims, w: e.target.value})} className="bg-darkbg border border-titanium/30 rounded-lg px-4 py-2 text-steel focus:border-metalaccent focus:ring-1 focus:ring-metalaccent outline-none" />
@@ -136,7 +182,7 @@ const PurchaseEstimationModule = () => {
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-white uppercase tracking-wider mb-3 border-b border-titanium/20 pb-2">Gross Material (McMaster) Dimensions (mm)</h3>
+                <h3 className="text-lg font-bold text-white uppercase tracking-wider mb-3 border-b border-titanium/20 pb-2">Gross Material (McMaster) Dimensions ({unit})</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <input type="number" placeholder="L" value={grossDims.l} onChange={e => setGrossDims({...grossDims, l: e.target.value})} className="bg-darkbg border border-titanium/30 rounded-lg px-4 py-2 text-steel focus:border-metalaccent focus:ring-1 focus:ring-metalaccent outline-none" />
                   <input type="number" placeholder="W" value={grossDims.w} onChange={e => setGrossDims({...grossDims, w: e.target.value})} className="bg-darkbg border border-titanium/30 rounded-lg px-4 py-2 text-steel focus:border-metalaccent focus:ring-1 focus:ring-metalaccent outline-none" />
@@ -165,19 +211,14 @@ const PurchaseEstimationModule = () => {
             
             <div className="flex-1 space-y-6">
               <div className="bg-darkbg/50 p-4 rounded-lg border border-titanium/20">
-                <span className="text-sm text-titanium uppercase tracking-wider block mb-1">Part Volume</span>
-                <span className="text-2xl text-white font-mono">{partVolume > 0 ? partVolume.toFixed(2) : '0'} mm³</span>
-              </div>
-              
-              <div className="bg-darkbg/50 p-4 rounded-lg border border-titanium/20">
-                <span className="text-sm text-titanium uppercase tracking-wider block mb-1">Gross Material Volume</span>
-                <span className="text-2xl text-white font-mono">{grossVolume > 0 ? grossVolume.toFixed(2) : '0'} mm³</span>
+                <span className="text-sm text-titanium uppercase tracking-wider block mb-1">Rotation Breakdown</span>
+                <span className="text-2xl text-white font-mono">{breakdown || 'N/A'}</span>
               </div>
 
               <div className="bg-darkbg/50 p-4 rounded-lg border border-metalaccent/30 bg-metalaccent/5">
                 <span className="text-sm text-titanium uppercase tracking-wider block mb-1">Estimated Pieces Available</span>
                 <span className="text-3xl text-metalaccent font-bold font-mono">{piecesAvailable}</span>
-                <span className="text-xs text-titanium mt-2 block">(Based on 95% yield efficiency)</span>
+                <span className="text-xs text-titanium mt-2 block">(Based on orthogonal nesting with kerf)</span>
               </div>
 
               <div className="bg-darkbg/50 p-4 rounded-lg border border-green-500/30 bg-green-500/5">
@@ -209,3 +250,4 @@ const PurchaseEstimationModule = () => {
 };
 
 export default PurchaseEstimationModule;
+

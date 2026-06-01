@@ -173,7 +173,8 @@ app.put('/api/piezas/:id', (req, res) => {
         'dim_largo_bruto', 'dim_ancho_bruto', 'dim_alto_bruto',
         'costo_material_bruto',
         'costo_lote_diseno', 'costo_lote_prefabricacion', 'costo_lote_armado', 
-        'costo_lote_pulido', 'costo_lote_grabado', 'estado'
+        'costo_lote_pulido', 'costo_lote_grabado', 'estado',
+        'unidad', 'kerf'
     ];
     
     const fieldsToUpdate = [];

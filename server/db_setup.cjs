@@ -52,6 +52,8 @@ db.exec(`
     costo_lote_armado REAL,
     costo_lote_pulido REAL,
     costo_lote_grabado REAL,
+    unidad TEXT DEFAULT 'in',
+    kerf REAL DEFAULT 0.125,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -93,6 +95,16 @@ try {
   for (const col of newCols) {
     try {
       db.exec(`ALTER TABLE Proyectos_Piezas ADD COLUMN ${col} REAL;`);
+    } catch (e) {}
+  }
+
+  const defaultCols = [
+    { name: 'unidad', type: "TEXT DEFAULT 'in'" },
+    { name: 'kerf', type: "REAL DEFAULT 0.125" }
+  ];
+  for (const col of defaultCols) {
+    try {
+      db.exec(`ALTER TABLE Proyectos_Piezas ADD COLUMN ${col.name} ${col.type};`);
     } catch (e) {}
   }
 } catch (e) {
