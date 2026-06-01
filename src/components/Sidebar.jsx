@@ -38,6 +38,26 @@ const Sidebar = ({ currentView, setView }) => {
         >
           <span className="font-medium uppercase tracking-wide text-sm">Reception</span>
         </button>
+        <button
+          onClick={() => setView('mcmaster')}
+          className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${
+            currentView === 'mcmaster'
+              ? 'bg-metalaccent/20 text-metalaccent border border-metalaccent/30'
+              : 'text-titanium hover:bg-lead/20 hover:text-steel'
+          }`}
+        >
+          <span className="font-medium uppercase tracking-wide text-sm">McMaster Sync</span>
+        </button>
+        <button
+          onClick={() => setView('fusion')}
+          className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${
+            currentView === 'fusion'
+              ? 'bg-metalaccent/20 text-metalaccent border border-metalaccent/30'
+              : 'text-titanium hover:bg-lead/20 hover:text-steel'
+          }`}
+        >
+          <span className="font-medium uppercase tracking-wide text-sm">Fusion Times</span>
+        </button>
       </nav>
       <div className="p-4 border-t border-titanium/30">
         <button

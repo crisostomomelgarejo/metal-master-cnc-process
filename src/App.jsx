@@ -3,6 +3,8 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import AdminPanel from './components/AdminPanel';
 import ReceptionModule from './components/ReceptionModule';
+import McMasterModule from './components/McMasterModule';
+import FusionTimesModule from './components/FusionTimesModule';
 
 function App() {
   const [view, setView] = useState('login');
@@ -56,11 +58,14 @@ function App() {
     <div className="min-h-screen bg-[#080d19] text-steel flex overflow-hidden">
       <Sidebar currentView={view} setView={setView} />
       <main className="flex-1 overflow-hidden relative">
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-darkbg/50 to-transparent"></div>
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-[#0f172a] to-[#040811] z-0"></div>
+        <div className="absolute inset-0 pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')] opacity-50 z-0"></div>
         <div className="relative z-10 h-full">
           {view === 'dashboard' && <Dashboard />}
           {view === 'admin' && <AdminPanel />}
           {view === 'reception' && <ReceptionModule />}
+          {view === 'mcmaster' && <McMasterModule />}
+          {view === 'fusion' && <FusionTimesModule />}
         </div>
       </main>
     </div>
