@@ -124,6 +124,41 @@ app.post('/api/piezas', (req, res) => {
     });
 });
 
+
+// GET /api/piezas
+app.get('/api/piezas', (req, res) => {
+    const query = 'SELECT * FROM Proyectos_Piezas ORDER BY id DESC';
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+// PUT /api/piezas/:id/estado
+app.put('/api/piezas/:id/estado', (req, res) => {
+    const { estado } = req.body;
+    const { id } = req.params;
+    
+    if (!estado) {
+        return res.status(400).json({ error: 'estado es requerido' });
+    }
+    
+    const query = 'UPDATE Proyectos_Piezas SET estado = ? WHERE id = ?';
+    db.run(query, [estado, id], function(err) {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ error: err.message });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Pieza no encontrada' });
+        }
+        res.json({ message: 'Estado actualizado correctamente' });
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });

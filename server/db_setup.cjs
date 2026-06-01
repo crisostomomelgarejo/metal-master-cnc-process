@@ -34,6 +34,7 @@ db.exec(`
     numero_fabricacion TEXT,
     material_solicitado TEXT,
     materiales_alternativos TEXT,
+    estado TEXT DEFAULT 'RECEPCION',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -60,6 +61,13 @@ db.exec(`
 try {
   // Patches for existing database
   db.exec(`ALTER TABLE Proyectos_Piezas ADD COLUMN orden_secuencial INTEGER;`);
+} catch (e) {
+  // Ignore if column already exists
+}
+
+try {
+  db.exec(`ALTER TABLE Proyectos_Piezas ADD COLUMN estado TEXT DEFAULT 'RECEPCION';`);
+  db.exec(`UPDATE Proyectos_Piezas SET estado = 'RECEPCION' WHERE estado IS NULL;`);
 } catch (e) {
   // Ignore if column already exists
 }

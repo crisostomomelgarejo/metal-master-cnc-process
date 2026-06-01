@@ -144,3 +144,102 @@ export const generateHitoA = (formData, rates) => {
 
   doc.save(`Hito_A_${formData.orderId || 'ORD-001'}.pdf`);
 };
+
+export const generateReceiptOrder = (piece) => {
+  const doc = new jsPDF();
+  
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(50, 50, 50);
+  doc.text('METAL MASTER', 14, 20);
+
+  doc.setFontSize(14);
+  doc.text('Receipt Order', 14, 30);
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Piece ID: ${piece.id || 'N/A'}`, 14, 40);
+  doc.text(`Name: ${piece.nombre || 'N/A'}`, 14, 45);
+  doc.text(`Status: ${piece.estado || 'N/A'}`, 14, 50);
+  doc.text(`Date: ${new Date().toLocaleDateString()}`, 150, 20);
+
+  doc.setDrawColor(200, 200, 200);
+  doc.line(14, 55, 196, 55);
+
+  doc.text('General details regarding the reception of this piece.', 14, 65);
+
+  doc.save(`Receipt_Order_${piece.id || 'Piece'}.pdf`);
+};
+
+export const generatePurchaseOrder = (piece) => {
+  const doc = new jsPDF();
+  
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(50, 50, 50);
+  doc.text('METAL MASTER', 14, 20);
+
+  doc.setFontSize(14);
+  doc.text('Purchase Order', 14, 30);
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Piece ID: ${piece.id || 'N/A'}`, 14, 40);
+  doc.text(`Date: ${new Date().toLocaleDateString()}`, 150, 20);
+
+  doc.autoTable({
+    startY: 50,
+    head: [['Material / BOM', 'Quantity', 'Notes']],
+    body: [
+      [piece.material || 'Standard Material', '1', 'For piece fabrication']
+    ],
+    theme: 'grid',
+    headStyles: { fillColor: [80, 80, 80] },
+  });
+
+  doc.save(`Purchase_Order_${piece.id || 'Piece'}.pdf`);
+};
+
+export const generateManufacturingOrder = (piece) => {
+  const doc = new jsPDF();
+  
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(50, 50, 50);
+  doc.text('METAL MASTER', 14, 20);
+
+  doc.setFontSize(14);
+  doc.text('Manufacturing Decision & Details', 14, 30);
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Piece ID: ${piece.id || 'N/A'}`, 14, 40);
+  doc.text(`Name: ${piece.nombre || 'N/A'}`, 14, 45);
+  doc.text(`Complexity: ${piece.complejidad || 'N/A'}`, 14, 50);
+  doc.text(`Estimated Time: ${piece.tiempo_estimado || 'N/A'} hrs`, 14, 55);
+  
+  doc.text(`Date: ${new Date().toLocaleDateString()}`, 150, 20);
+
+  doc.autoTable({
+    startY: 65,
+    head: [['Operation', 'Time', 'Rate', 'Total Cost']],
+    body: [
+      ['Machining', piece.tiempo_estimado || '0', '$50/hr', `$${((piece.tiempo_estimado || 0) * 50).toFixed(2)}`]
+    ],
+    theme: 'grid',
+    headStyles: { fillColor: [80, 80, 80] },
+    foot: [['', '', 'Total:', `$${((piece.tiempo_estimado || 0) * 50).toFixed(2)}`]],
+    footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] }
+  });
+
+  const finalY = doc.lastAutoTable.finalY || 100;
+  
+  doc.text('Approval Signatures:', 14, finalY + 20);
+  doc.line(14, finalY + 30, 70, finalY + 30);
+  doc.text('Manufacturing Manager', 14, finalY + 35);
+
+  doc.line(100, finalY + 30, 156, finalY + 30);
+  doc.text('Quality Control', 100, finalY + 35);
+
+  doc.save(`Manufacturing_Order_${piece.id || 'Piece'}.pdf`);
+};

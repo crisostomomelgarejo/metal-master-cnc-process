@@ -5,6 +5,7 @@ import AdminPanel from './components/AdminPanel';
 import ReceptionModule from './components/ReceptionModule';
 import McMasterModule from './components/McMasterModule';
 import FusionTimesModule from './components/FusionTimesModule';
+import DocumentViewerModule from './components/DocumentViewerModule';
 
 function App() {
   const [view, setView] = useState('login');
@@ -66,6 +67,7 @@ function App() {
           {view === 'reception' && <ReceptionModule />}
           {view === 'mcmaster' && <McMasterModule />}
           {view === 'fusion' && <FusionTimesModule />}
+          {view === 'documents' && <DocumentViewerModule />}
         </div>
       </main>
     </div>
