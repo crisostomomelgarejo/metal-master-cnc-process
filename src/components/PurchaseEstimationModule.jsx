@@ -8,14 +8,18 @@ const PurchaseEstimationModule = () => {
   const [kerf, setKerf] = useState(3.0);
 
   const [partDims, setPartDims] = useState({ l: '', w: '', h: '' });
-  const [grossDims, setGrossDims] = useState({ l: '', w: '', h: '' });
-  const [grossCost, setGrossCost] = useState('');
+  
+  // Multi-Lot Cart State
+  const [lotes, setLotes] = useState([]);
+  const [lotSku, setLotSku] = useState('');
+  const [lotDims, setLotDims] = useState({ l: '', w: '', h: '' });
+  const [lotCost, setLotCost] = useState('');
+  const [lotQty, setLotQty] = useState(1);
   
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    // Mock fetch for pieces
     const fetchPiezas = async () => {
       try {
         const response = await fetch('/api/piezas');
@@ -24,16 +28,16 @@ const PurchaseEstimationModule = () => {
           setPiezas(data);
         } else {
           setPiezas([
-            { id: 1, name: 'PZ-1001-A', description: 'Bracket Base', status: 'ESTIMATING' },
-            { id: 2, name: 'PZ-1002-B', description: 'Mounting Plate', status: 'ESTIMATING' },
-            { id: 3, name: 'PZ-1003-C', description: 'Shaft 20mm', status: 'ESTIMATING' }
+            { id: 1, name: 'PZ-1001-A', description: 'Bracket Base', status: 'ESTIMATING', cantidad: 50 },
+            { id: 2, name: 'PZ-1002-B', description: 'Mounting Plate', status: 'ESTIMATING', cantidad: 120 },
+            { id: 3, name: 'PZ-1003-C', description: 'Shaft 20mm', status: 'ESTIMATING', cantidad: 200 }
           ]);
         }
       } catch (err) {
         setPiezas([
-          { id: 1, name: 'PZ-1001-A', description: 'Bracket Base', status: 'ESTIMATING' },
-          { id: 2, name: 'PZ-1002-B', description: 'Mounting Plate', status: 'ESTIMATING' },
-          { id: 3, name: 'PZ-1003-C', description: 'Shaft 20mm', status: 'ESTIMATING' }
+          { id: 1, name: 'PZ-1001-A', description: 'Bracket Base', status: 'ESTIMATING', cantidad: 50 },
+          { id: 2, name: 'PZ-1002-B', description: 'Mounting Plate', status: 'ESTIMATING', cantidad: 120 },
+          { id: 3, name: 'PZ-1003-C', description: 'Shaft 20mm', status: 'ESTIMATING', cantidad: 200 }
         ]);
       }
     };
@@ -45,6 +49,7 @@ const PurchaseEstimationModule = () => {
     const pieza = piezas.find(p => p.id === piezaId);
     setSelectedPieza(pieza || null);
     setMessage('');
+    setLotes([]);
   };
 
   const calculateMaxYield = (gross, part, kValue) => {
@@ -89,12 +94,34 @@ const PurchaseEstimationModule = () => {
     return { pieces: maxYield, breakdown: maxYield > 0 ? bestBreakdown : '0x0x0 = 0 piezas' };
   };
 
-  const { pieces: piecesAvailable, breakdown } = calculateMaxYield(grossDims, partDims, kerf);
-  
-  let unitCost = 0;
-  if (piecesAvailable > 0 && parseFloat(grossCost) > 0) {
-    unitCost = parseFloat(grossCost) / piecesAvailable;
-  }
+  const handleAddLot = () => {
+    const { pieces: piecesPerUnit, breakdown } = calculateMaxYield(lotDims, partDims, kerf);
+    const qty = parseInt(lotQty) || 1;
+    const totalYield = piecesPerUnit * qty;
+    
+    const newLot = {
+      id: Date.now(),
+      sku: lotSku,
+      dims: { ...lotDims },
+      cost: parseFloat(lotCost) || 0,
+      qty,
+      yieldPerUnit: piecesPerUnit,
+      totalYield,
+      breakdown
+    };
+    
+    setLotes([...lotes, newLot]);
+    
+    setLotSku('');
+    setLotDims({ l: '', w: '', h: '' });
+    setLotCost('');
+    setLotQty(1);
+  };
+
+  const piecesRequested = selectedPieza?.cantidad || 0;
+  const totalYielded = lotes.reduce((sum, lot) => sum + lot.totalYield, 0);
+  const totalCost = lotes.reduce((sum, lot) => sum + (lot.cost * lot.qty), 0);
+  const unitMaterialCost = piecesRequested > 0 ? (totalCost / piecesRequested) : 0;
 
   const handleSubmit = async () => {
     if (!selectedPieza) return;
@@ -104,14 +131,15 @@ const PurchaseEstimationModule = () => {
     try {
       const payload = {
         ...selectedPieza,
+        costo_material_bruto: unitMaterialCost,
+        lotes_material_comprado: JSON.stringify(lotes),
         purchase_estimation: {
           unidad: unit,
           kerf,
           partDims,
-          grossDims,
-          grossCost,
-          piecesAvailable,
-          unitCost
+          totalYielded,
+          piecesRequested,
+          totalCost
         }
       };
       
@@ -182,11 +210,38 @@ const PurchaseEstimationModule = () => {
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-white uppercase tracking-wider mb-3 border-b border-titanium/20 pb-2">Gross Material (McMaster) Dimensions ({unit})</h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <input type="number" placeholder="L" value={grossDims.l} onChange={e => setGrossDims({...grossDims, l: e.target.value})} className="bg-darkbg border border-titanium/30 rounded-lg px-4 py-2 text-steel focus:border-metalaccent focus:ring-1 focus:ring-metalaccent outline-none" />
-                  <input type="number" placeholder="W" value={grossDims.w} onChange={e => setGrossDims({...grossDims, w: e.target.value})} className="bg-darkbg border border-titanium/30 rounded-lg px-4 py-2 text-steel focus:border-metalaccent focus:ring-1 focus:ring-metalaccent outline-none" />
-                  <input type="number" placeholder="H" value={grossDims.h} onChange={e => setGrossDims({...grossDims, h: e.target.value})} className="bg-darkbg border border-titanium/30 rounded-lg px-4 py-2 text-steel focus:border-metalaccent focus:ring-1 focus:ring-metalaccent outline-none" />
+                <h3 className="text-lg font-bold text-white uppercase tracking-wider mb-3 border-b border-titanium/20 pb-2">Agregar Lote (McMaster)</h3>
+                
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                   <div>
+                     <label className="block text-xs font-bold text-titanium mb-1 uppercase tracking-wider">SKU / Item Name</label>
+                     <input type="text" value={lotSku} onChange={e => setLotSku(e.target.value)} className="w-full bg-darkbg border border-titanium/30 rounded-lg px-4 py-2 text-steel focus:border-metalaccent focus:ring-1 focus:ring-metalaccent outline-none" placeholder="e.g. 8910K12" />
+                   </div>
+                   <div>
+                     <label className="block text-xs font-bold text-titanium mb-1 uppercase tracking-wider">Cost per Unit ($)</label>
+                     <input type="number" value={lotCost} onChange={e => setLotCost(e.target.value)} className="w-full bg-darkbg border border-titanium/30 rounded-lg px-4 py-2 text-steel focus:border-metalaccent focus:ring-1 focus:ring-metalaccent outline-none" placeholder="0.00" />
+                   </div>
+                </div>
+
+                <label className="block text-xs font-bold text-titanium mb-1 uppercase tracking-wider">Dimensions ({unit})</label>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <input type="number" placeholder="L" value={lotDims.l} onChange={e => setLotDims({...lotDims, l: e.target.value})} className="bg-darkbg border border-titanium/30 rounded-lg px-4 py-2 text-steel focus:border-metalaccent focus:ring-1 focus:ring-metalaccent outline-none" />
+                  <input type="number" placeholder="W" value={lotDims.w} onChange={e => setLotDims({...lotDims, w: e.target.value})} className="bg-darkbg border border-titanium/30 rounded-lg px-4 py-2 text-steel focus:border-metalaccent focus:ring-1 focus:ring-metalaccent outline-none" />
+                  <input type="number" placeholder="H" value={lotDims.h} onChange={e => setLotDims({...lotDims, h: e.target.value})} className="bg-darkbg border border-titanium/30 rounded-lg px-4 py-2 text-steel focus:border-metalaccent focus:ring-1 focus:ring-metalaccent outline-none" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 items-end">
+                   <div>
+                     <label className="block text-xs font-bold text-titanium mb-1 uppercase tracking-wider">Qty to Buy</label>
+                     <input type="number" value={lotQty} onChange={e => setLotQty(e.target.value)} min="1" className="w-full bg-darkbg border border-titanium/30 rounded-lg px-4 py-2 text-steel focus:border-metalaccent focus:ring-1 focus:ring-metalaccent outline-none" placeholder="1" />
+                   </div>
+                   <button 
+                     onClick={handleAddLot}
+                     disabled={!lotDims.l || !lotDims.w || !lotDims.h || !partDims.l}
+                     className="w-full bg-metalaccent/20 border border-metalaccent hover:bg-metalaccent text-metalaccent hover:text-white font-bold py-2 rounded-lg transition-all uppercase tracking-widest disabled:opacity-50"
+                   >
+                     + Agregar Lote
+                   </button>
                 </div>
               </div>
 
@@ -207,18 +262,6 @@ const PurchaseEstimationModule = () => {
                   </div>
                 </div>
               )}
-
-              <div>
-                <h3 className="text-lg font-bold text-white uppercase tracking-wider mb-3 border-b border-titanium/20 pb-2">Material Cost</h3>
-                <label className="block text-xs font-bold text-titanium mb-1 uppercase tracking-wider">Gross Material Cost ($)</label>
-                <input 
-                  type="number" 
-                  value={grossCost} 
-                  onChange={e => setGrossCost(e.target.value)} 
-                  className="w-full bg-darkbg border border-titanium/30 rounded-lg px-4 py-2 text-steel focus:border-metalaccent focus:ring-1 focus:ring-metalaccent outline-none" 
-                  placeholder="0.00" 
-                />
-              </div>
             </div>
           )}
         </div>
@@ -228,27 +271,61 @@ const PurchaseEstimationModule = () => {
             <h2 className="text-xl font-bold text-white uppercase tracking-wider mb-6 border-b border-titanium/20 pb-2">Estimation Results</h2>
             
             <div className="flex-1 space-y-6">
-              <div className="bg-darkbg/50 p-4 rounded-lg border border-titanium/20">
-                <span className="text-sm text-titanium uppercase tracking-wider block mb-1">Rotation Breakdown</span>
-                <span className="text-2xl text-white font-mono">{breakdown || 'N/A'}</span>
+              <div className="bg-darkbg/50 p-4 rounded-lg border border-titanium/20 mb-4">
+                <span className="text-sm text-titanium uppercase tracking-wider block mb-1">Total Pieces Requested</span>
+                <span className="text-3xl text-white font-mono">{piecesRequested}</span>
               </div>
 
-              <div className="bg-darkbg/50 p-4 rounded-lg border border-metalaccent/30 bg-metalaccent/5">
-                <span className="text-sm text-titanium uppercase tracking-wider block mb-1">Estimated Pieces Available</span>
-                <span className="text-3xl text-metalaccent font-bold font-mono">{piecesAvailable}</span>
-                <span className="text-xs text-titanium mt-2 block">(Based on orthogonal nesting with kerf)</span>
+              <div className="bg-darkbg/50 p-4 rounded-lg border border-metalaccent/30 bg-metalaccent/5 mb-4">
+                <div className="flex justify-between items-end mb-2">
+                  <span className="text-sm text-titanium uppercase tracking-wider block">Total Yielded Pieces</span>
+                  <span className="text-3xl text-metalaccent font-bold font-mono">{totalYielded} / {piecesRequested}</span>
+                </div>
+                <div className="w-full bg-darkbg rounded-full h-2.5 border border-titanium/30">
+                  <div className={`h-2.5 rounded-full ${totalYielded >= piecesRequested ? 'bg-green-500' : 'bg-metalaccent'}`} style={{ width: `${Math.min((totalYielded / (piecesRequested || 1)) * 100, 100)}%` }}></div>
+                </div>
+                <span className="text-xs text-titanium mt-2 block">Yielded {totalYielded} of {piecesRequested} requested pieces</span>
               </div>
 
-              <div className="bg-darkbg/50 p-4 rounded-lg border border-green-500/30 bg-green-500/5">
-                <span className="text-sm text-titanium uppercase tracking-wider block mb-1">Unit Material Cost</span>
-                <span className="text-3xl text-green-400 font-bold font-mono">${unitCost.toFixed(2)}</span>
+              <div className="bg-darkbg/50 p-4 rounded-lg border border-titanium/20 mb-4 h-48 overflow-y-auto">
+                <span className="text-sm text-titanium uppercase tracking-wider block mb-3 border-b border-titanium/20 pb-2">Lots Cart</span>
+                {lotes.length === 0 ? (
+                  <p className="text-titanium text-sm text-center py-4">No lots added yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {lotes.map(lot => (
+                      <div key={lot.id} className="border border-titanium/30 rounded p-3 bg-darkbg flex justify-between items-center">
+                        <div>
+                          <p className="text-white font-bold text-sm uppercase">{lot.sku || 'UNNAMED LOT'}</p>
+                          <p className="text-titanium text-xs font-mono">{lot.dims.l}x{lot.dims.w}x{lot.dims.h} | Qty: {lot.qty}</p>
+                          <p className="text-metalaccent text-xs font-mono mt-1">Yields: {lot.yieldPerUnit} x {lot.qty} = {lot.totalYield} pcs ({lot.breakdown})</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-white font-bold font-mono">${(lot.cost * lot.qty).toFixed(2)}</p>
+                          <button onClick={() => setLotes(lotes.filter(l => l.id !== lot.id))} className="text-red-400 hover:text-red-300 text-xs uppercase tracking-wider mt-2">Remove</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-1 bg-darkbg/50 p-4 rounded-lg border border-titanium/20">
+                  <span className="text-sm text-titanium uppercase tracking-wider block mb-1">Total Cost</span>
+                  <span className="text-2xl text-white font-bold font-mono">${totalCost.toFixed(2)}</span>
+                </div>
+                <div className="flex-1 bg-darkbg/50 p-4 rounded-lg border border-green-500/30 bg-green-500/5">
+                  <span className="text-sm text-titanium uppercase tracking-wider block mb-1">Unit Material Cost</span>
+                  <span className="text-2xl text-green-400 font-bold font-mono">${unitMaterialCost.toFixed(2)}</span>
+                </div>
               </div>
             </div>
 
             <div className="mt-8 pt-6 border-t border-titanium/20">
               <button 
                 onClick={handleSubmit}
-                disabled={loading || piecesAvailable <= 0}
+                disabled={loading || lotes.length === 0}
                 className="w-full bg-metalaccent/20 border border-metalaccent hover:bg-metalaccent text-metalaccent hover:text-white font-bold py-4 rounded-lg transition-all uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
               >
                 {loading ? 'Processing...' : 'Generar Orden'}
@@ -268,4 +345,5 @@ const PurchaseEstimationModule = () => {
 };
 
 export default PurchaseEstimationModule;
+
 

@@ -54,6 +54,7 @@ db.exec(`
     costo_lote_grabado REAL,
     unidad TEXT DEFAULT 'in',
     kerf REAL DEFAULT 0.125,
+    lotes_material_comprado TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -100,7 +101,8 @@ try {
 
   const defaultCols = [
     { name: 'unidad', type: "TEXT DEFAULT 'in'" },
-    { name: 'kerf', type: "REAL DEFAULT 0.125" }
+    { name: 'kerf', type: "REAL DEFAULT 0.125" },
+    { name: 'lotes_material_comprado', type: "TEXT" }
   ];
   for (const col of defaultCols) {
     try {
