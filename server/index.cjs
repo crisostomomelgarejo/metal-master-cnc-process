@@ -159,6 +159,52 @@ app.put('/api/piezas/:id/estado', (req, res) => {
     });
 });
 
+// PUT /api/piezas/:id
+app.put('/api/piezas/:id', (req, res) => {
+    const { id } = req.params;
+    const body = req.body;
+    
+    const allowedFields = [
+        'nombre', 'descripcion', 'cantidad_piezas', 'en_inventario', 
+        'herramientas_requeridas', 'suplementos', 'referencia_original', 
+        'numero_fabricacion', 'material_solicitado', 'materiales_alternativos',
+        'horas_cnc', 'horas_torno', 'horas_laser', 'horas_perforadora', 'horas_diseno',
+        'dim_largo_final', 'dim_ancho_final', 'dim_alto_final',
+        'dim_largo_bruto', 'dim_ancho_bruto', 'dim_alto_bruto',
+        'costo_material_bruto',
+        'costo_lote_diseno', 'costo_lote_prefabricacion', 'costo_lote_armado', 
+        'costo_lote_pulido', 'costo_lote_grabado', 'estado'
+    ];
+    
+    const fieldsToUpdate = [];
+    const values = [];
+    
+    for (const field of allowedFields) {
+        if (body[field] !== undefined) {
+            fieldsToUpdate.push(`${field} = ?`);
+            values.push(body[field]);
+        }
+    }
+    
+    if (fieldsToUpdate.length === 0) {
+        return res.status(400).json({ error: 'No se enviaron campos válidos para actualizar' });
+    }
+    
+    values.push(id);
+    const query = `UPDATE Proyectos_Piezas SET ${fieldsToUpdate.join(', ')} WHERE id = ?`;
+    
+    db.run(query, values, function(err) {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ error: err.message });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Pieza no encontrada' });
+        }
+        res.json({ message: 'Pieza actualizada correctamente' });
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });

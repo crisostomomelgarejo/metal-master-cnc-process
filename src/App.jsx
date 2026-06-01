@@ -3,9 +3,10 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import AdminPanel from './components/AdminPanel';
 import ReceptionModule from './components/ReceptionModule';
-import McMasterModule from './components/McMasterModule';
-import FusionTimesModule from './components/FusionTimesModule';
+import PurchaseEstimationModule from './components/PurchaseEstimationModule';
+import ManufacturingTimesModule from './components/ManufacturingTimesModule';
 import DocumentViewerModule from './components/DocumentViewerModule';
+import TotalCostMatchModule from './components/TotalCostMatchModule';
 
 function App() {
   const [view, setView] = useState('login');
@@ -65,9 +66,10 @@ function App() {
           {view === 'dashboard' && <Dashboard />}
           {view === 'admin' && <AdminPanel />}
           {view === 'reception' && <ReceptionModule />}
-          {view === 'mcmaster' && <McMasterModule />}
-          {view === 'fusion' && <FusionTimesModule />}
+          {view === 'mcmaster' && <PurchaseEstimationModule />}
+          {view === 'fusion' && <ManufacturingTimesModule />}
           {view === 'documents' && <DocumentViewerModule />}
+          {view === 'totalcost' && <TotalCostMatchModule />}
         </div>
       </main>
     </div>

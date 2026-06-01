@@ -7,7 +7,7 @@ const Sidebar = ({ currentView, setView }) => {
         <h2 className="text-xl font-bold text-white tracking-widest uppercase">Metal Master</h2>
         <p className="text-titanium text-xs mt-1">Management Portal</p>
       </div>
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         <button
           onClick={() => setView('dashboard')}
           className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${
@@ -46,7 +46,7 @@ const Sidebar = ({ currentView, setView }) => {
               : 'text-titanium hover:bg-lead/20 hover:text-steel'
           }`}
         >
-          <span className="font-medium uppercase tracking-wide text-sm">McMaster Sync</span>
+          <span className="font-medium uppercase tracking-wide text-sm">Purchase Estimation</span>
         </button>
         <button
           onClick={() => setView('fusion')}
@@ -56,7 +56,7 @@ const Sidebar = ({ currentView, setView }) => {
               : 'text-titanium hover:bg-lead/20 hover:text-steel'
           }`}
         >
-          <span className="font-medium uppercase tracking-wide text-sm">Fusion Times</span>
+          <span className="font-medium uppercase tracking-wide text-sm">Manufacturing Times</span>
         </button>
         <button
           onClick={() => setView('documents')}
@@ -67,6 +67,16 @@ const Sidebar = ({ currentView, setView }) => {
           }`}
         >
           <span className="font-medium uppercase tracking-wide text-sm">Document Viewer</span>
+        </button>
+        <button
+          onClick={() => setView('totalcost')}
+          className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${
+            currentView === 'totalcost'
+              ? 'bg-metalaccent/20 text-metalaccent border border-metalaccent/30'
+              : 'text-titanium hover:bg-lead/20 hover:text-steel'
+          }`}
+        >
+          <span className="font-medium uppercase tracking-wide text-sm">Total Cost Match</span>
         </button>
       </nav>
       <div className="p-4 border-t border-titanium/30">

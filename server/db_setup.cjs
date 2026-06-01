@@ -35,6 +35,23 @@ db.exec(`
     material_solicitado TEXT,
     materiales_alternativos TEXT,
     estado TEXT DEFAULT 'RECEPCION',
+    horas_cnc REAL,
+    horas_torno REAL,
+    horas_laser REAL,
+    horas_perforadora REAL,
+    horas_diseno REAL,
+    dim_largo_final REAL,
+    dim_ancho_final REAL,
+    dim_alto_final REAL,
+    dim_largo_bruto REAL,
+    dim_ancho_bruto REAL,
+    dim_alto_bruto REAL,
+    costo_material_bruto REAL,
+    costo_lote_diseno REAL,
+    costo_lote_prefabricacion REAL,
+    costo_lote_armado REAL,
+    costo_lote_pulido REAL,
+    costo_lote_grabado REAL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -63,6 +80,23 @@ try {
   db.exec(`ALTER TABLE Proyectos_Piezas ADD COLUMN orden_secuencial INTEGER;`);
 } catch (e) {
   // Ignore if column already exists
+}
+
+try {
+  const newCols = [
+    'horas_cnc', 'horas_torno', 'horas_laser', 'horas_perforadora', 'horas_diseno',
+    'dim_largo_final', 'dim_ancho_final', 'dim_alto_final',
+    'dim_largo_bruto', 'dim_ancho_bruto', 'dim_alto_bruto',
+    'costo_material_bruto',
+    'costo_lote_diseno', 'costo_lote_prefabricacion', 'costo_lote_armado', 'costo_lote_pulido', 'costo_lote_grabado'
+  ];
+  for (const col of newCols) {
+    try {
+      db.exec(`ALTER TABLE Proyectos_Piezas ADD COLUMN ${col} REAL;`);
+    } catch (e) {}
+  }
+} catch (e) {
+  console.error(e);
 }
 
 try {
